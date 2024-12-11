@@ -5,6 +5,16 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 단어장프로그램 관리하는 VocManager class
+ *
+ * menu4는 gui에 맞게 변경하였다.
+ * menu1,2,3은 콘솔에서 출력되는 형태이므로 gui에서 실행되는 함수는 아니다.
+ *
+ * @author 서아영
+ * @since 2024-12-11
+ */
+
 public class VocManager {
     String name;
     List<Word> voc = new ArrayList<>();

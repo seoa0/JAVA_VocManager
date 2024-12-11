@@ -2,6 +2,15 @@ package project02;
 
 import java.util.Objects;
 
+/**
+ * 단어 정보를 저장하는 Word class
+ *
+ * menu4 단어검색 함수에 맞게 eng가 동일하면 equals하도록 overriding하였다.
+ *
+ * @author 서아영
+ * @since 2024-12-11
+ */
+
 public class Word {
     String eng;
     String kor;
