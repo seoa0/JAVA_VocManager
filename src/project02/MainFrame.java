@@ -345,6 +345,8 @@ public class MainFrame extends JFrame {
         inputButton.addActionListener(e -> {
             try {
                 int answer = Integer.parseInt(inputField.getText().trim());
+                inputField.setEnabled(false); // 입력 필드 비활성화
+                inputButton.setEnabled(false); // 버튼 비활성화
                 if (answer < 1 || answer > 4) {
                     displayArea.append("1에서 4 사이의 숫자를 입력하세요.\n");
                     return;
@@ -356,9 +358,21 @@ public class MainFrame extends JFrame {
                     w.wrongCount++;
                     displayArea.append("틀렸습니다. 정답은 " + (option4.indexOf(w) + 1) + "번입니다.\n");
                 }
-                showNextQuestion2();
+                // 일정 시간 후 다음 문제로 이동
+                Timer timer = new Timer(2000, event -> {
+                    inputField.setEnabled(true); // 입력 필드 다시 활성화
+                    inputButton.setEnabled(true); // 버튼 다시 활성화
+                    inputField.requestFocusInWindow(); // 포커스 설정
+                    currentQuestion++;
+                    showNextQuestion2();
+                });
+                timer.setRepeats(false);
+                timer.start();
             } catch (NumberFormatException ex) {
                 displayArea.append("숫자를 입력하세요.\n");
+                inputField.setEnabled(true); // 입력 필드 다시 활성화
+                inputButton.setEnabled(true); // 버튼 다시 활성화
+                inputField.requestFocusInWindow(); // 포커스 설정
             }
         });
         // inputField의 Enter 입력 처리
@@ -389,6 +403,8 @@ public class MainFrame extends JFrame {
         // inputButton 이벤트 처리
         inputButton.addActionListener(e -> {
             String answer = inputField.getText().trim();
+            inputField.setEnabled(false); // 입력 필드 비활성화
+            inputButton.setEnabled(false); // 버튼 비활성화
             if (answer.equalsIgnoreCase(w.eng)) {
                 score++;
                 displayArea.append("정답입니다!\n");
@@ -396,8 +412,17 @@ public class MainFrame extends JFrame {
                 w.wrongCount++;
                 displayArea.append("틀렸습니다. 정답은 \"" + w.eng + "\"입니다.\n");
             }
-            currentQuestion++;
-            showNextQuestion1(); // 다음 문제로 이동
+
+            // 일정 시간 후 다음 문제로 이동
+            Timer timer = new Timer(2000, event -> {
+                inputField.setEnabled(true); // 입력 필드 다시 활성화
+                inputButton.setEnabled(true); // 버튼 다시 활성화
+                inputField.requestFocusInWindow(); // 포커스 설정
+                currentQuestion++;
+                showNextQuestion1();
+            });
+            timer.setRepeats(false);
+            timer.start();
         });
         for (ActionListener al : inputField.getActionListeners()) {
             inputField.removeActionListener(al);
@@ -410,7 +435,10 @@ public class MainFrame extends JFrame {
      */
     private void endQuiz() {
         endTime = System.nanoTime();
-        long timeTaken = (endTime - startTime) / 1_000_000_000;
+        long timeTaken = (endTime - startTime) / 1_000_000_000; // 총 소요 시간(초 단위)
+        timeTaken -= 20; // 20초 빼기 (문제 당 2초 * 10문제)
+        timeTaken = Math.max(0, timeTaken); // 음수 방지
+
         displayArea.setText("퀴즈 종료!\n");
         displayArea.append("점수: " + score + " / " + voc10.size() + "\n");
         displayArea.append("소요 시간: " + timeTaken + "초");
