@@ -1,4 +1,4 @@
-package week15;
+package week15.lab01;
 
 import java.io.File;
 import java.io.FileNotFoundException;

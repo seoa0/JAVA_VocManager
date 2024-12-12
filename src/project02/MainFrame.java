@@ -60,7 +60,6 @@ public class MainFrame extends JFrame {
     JButton inputButton;
 
     Container frame = getContentPane();
-    JPanel menuPanel;
     JPanel northPanel;
     JPanel centerPanel;
     JPanel inputPanel;
@@ -78,18 +77,18 @@ public class MainFrame extends JFrame {
     String[] header = {"영단어", "뜻"};
     String[] header2 = {"영단어", "뜻", "틀린 횟수", "출력 횟수"};
 
-    boolean flag = true;
+    boolean flag = true; // 오름차순
 
     /**
      * MainFrame 생성자
      */
     public MainFrame(String title, String filename) {
         super(title);
-
         this.vocManager = new VocManager("서아영");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(600, 600);
         initLayout();
+        showInitialMessage();
         this.setVisible(true);
         initVocManager(filename);
     }
@@ -108,10 +107,47 @@ public class MainFrame extends JFrame {
      */
     private void initLayout() {
         this.setLayout(new BorderLayout());
-        initMenuPanel();
+        initMenuBar();
         initCenterPanel();
         initNorthPanel();
         initInputPanel();
+    }
+    /**
+     * 메뉴바 초기화하는 함수
+     */
+    private void initMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenuItem menu1 = new JMenuItem("주관식 퀴즈");
+        menu1.addActionListener(e -> handleMenu1());
+
+        JMenuItem menu2 = new JMenuItem("객관식 퀴즈");
+        menu2.addActionListener(e -> handleMenu2());
+
+        JMenuItem menu3 = new JMenuItem("오답노트");
+        menu3.addActionListener(e -> handleMenu3());
+
+        JMenuItem menu4 = new JMenuItem("단어 검색");
+        menu4.addActionListener(e -> handleMenu4());
+
+        JMenuItem exit = new JMenuItem("종료");
+        exit.addActionListener(e -> System.exit(0));
+
+        menuBar.add(menu1);
+        menuBar.add(menu2);
+        menuBar.add(menu3);
+        menuBar.add(menu4);
+        menuBar.add(exit);
+
+        this.setJMenuBar(menuBar);
+    }
+    /**
+     * 초기 화면 설정하는 함수
+     */
+    private void showInitialMessage() {
+        JLabel messageLabel = new JLabel("메뉴를 선택하세요.", SwingConstants.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        frame.add(messageLabel, BorderLayout.CENTER);
     }
     /**
      * 중간 패널 초기화하는 함수
@@ -123,36 +159,6 @@ public class MainFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(displayArea);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         frame.add(centerPanel, BorderLayout.CENTER);
-    }
-    /**
-     * 왼쪽 메뉴 설정하는 함수
-     */
-    private void initMenuPanel() {
-        menuPanel = new JPanel(new GridLayout(5, 1, 10, 10));
-
-        JButton menu1Button = new JButton("주관식 퀴즈");
-        menu1Button.addActionListener(e -> handleMenu1());
-
-        JButton menu2Button = new JButton("객관식 퀴즈");
-        menu2Button.addActionListener(e -> handleMenu2());
-
-        JButton menu3Button = new JButton("오답노트");
-        menu3Button.addActionListener(e -> handleMenu3());
-
-        JButton menu4Button = new JButton("단어 검색");
-        menu4Button.addActionListener(e -> handleMenu4());
-
-        JButton exitButton = new JButton("종료");
-        // 4. 메뉴는 5번 종료 메뉴를 수행할 때까지 반복 수행되는가?
-        exitButton.addActionListener(e -> System.exit(0));
-
-        menuPanel.add(menu1Button);
-        menuPanel.add(menu2Button);
-        menuPanel.add(menu3Button);
-        menuPanel.add(menu4Button);
-        menuPanel.add(exitButton);
-
-        frame.add(menuPanel, BorderLayout.WEST);
     }
     /**
      * menu4
@@ -210,13 +216,12 @@ public class MainFrame extends JFrame {
                 initTableData();
             }
         });
-
         ButtonGroup group = new ButtonGroup();
         group.add(asc);
         group.add(desc);
         this.northPanel.add(asc);
         this.northPanel.add(desc);
-
+        this.northPanel.setVisible(false);
         frame.add(northPanel, BorderLayout.NORTH);
     }
     /**
@@ -227,16 +232,27 @@ public class MainFrame extends JFrame {
         inputPanel = new JPanel(new BorderLayout());
         inputField = new JTextField();
         inputButton = new JButton("입력");
-
         inputPanel.add(inputField, BorderLayout.CENTER);
         inputPanel.add(inputButton, BorderLayout.EAST);
+        this.inputPanel.setVisible(false);
         frame.add(inputPanel, BorderLayout.SOUTH);
+    }
+    /**
+     * menu1,2,3,4
+     * "메뉴를 입력하세요" 텍스트 삭제하는 함수
+     */
+    private void resetContentArea() {
+        this.getContentPane().removeAll();
+        this.revalidate();
+        this.repaint();
     }
     /**
      * menu4
      */
     private void handleMenu4() {
+        resetContentArea();
         togglePanels(true, false);
+        this.add(northPanel, BorderLayout.NORTH);
         resetCenterPanel();
         initTable();
         initTableData();
@@ -247,6 +263,7 @@ public class MainFrame extends JFrame {
      * menu3
      */
     private void handleMenu3() {
+        resetContentArea();
         togglePanels(false, false);
         resetCenterPanel();
         initTable();
@@ -258,14 +275,17 @@ public class MainFrame extends JFrame {
      * menu2
      */
     private void handleMenu2() {
+        resetContentArea();
         togglePanels(false, true);
         resetCenterPanel();
         initDisplayArea();
+        enableInputFieldAndButton();
         Collections.shuffle(vocManager.voc);
         voc10 = vocManager.voc.subList(0, Math.min(10, vocManager.voc.size()));
         currentQuestion = 0;
         score = 0;
         startTime = System.nanoTime();
+        this.add(inputPanel, BorderLayout.SOUTH);
         showNextQuestion2();
         frame.revalidate();
         frame.repaint();
@@ -274,15 +294,18 @@ public class MainFrame extends JFrame {
      * menu1
      */
     private void handleMenu1() {
+        resetContentArea();
         togglePanels(false, true);
         resetCenterPanel();
         initDisplayArea();
+        enableInputFieldAndButton();
         Collections.shuffle(vocManager.voc);
         // 5-A. 퀴즈 10문제가 중복되지 않도록 처리하였는가?
         voc10 = vocManager.voc.subList(0, Math.min(10, vocManager.voc.size()));
         currentQuestion = 0;
         score = 0;
         startTime = System.nanoTime();
+        this.add(inputPanel, BorderLayout.SOUTH);
         showNextQuestion1();
         frame.revalidate();
         frame.repaint();
@@ -326,22 +349,23 @@ public class MainFrame extends JFrame {
     private void showNextQuestion2() {
         // 6-E. 10문제가 연속으로 출제되는가?
         if (currentQuestion >= voc10.size()) {
-            // 6-H. 퀴즈 출제된 단어의 출제회수가 누적되는가?
-            voc10.forEach(word -> word.showCount++);
             endQuiz();
             return;
         }
         Word w = voc10.get(currentQuestion);
+        // 6-H. 퀴즈 출제된 단어의 출제회수가 누적되는가?
+        w.showCount++;
         // 6-A. 퀴즈의 선지로 선택된 4개의 영어 단어에는 중복이 없는가?
         option4 = vocManager.voc.stream()
-        // 6-B. 선지를 구성하는 4개의 영어 단어의 뜻도 중복체크 하였는가?
+                // 6-B. 선지를 구성하는 4개의 영어 단어의 뜻도 중복체크 하였는가?
                 .filter(word -> !word.kor.equals(w.kor))
-                .limit(3)
-                .collect(Collectors.toList());
+                .collect(Collectors.collectingAndThen(Collectors.toList(), collected -> {
+                    Collections.shuffle(collected);
+                    return collected.stream().limit(3).collect(Collectors.toList());
+                }));
         option4.add(w);
         // 6-C. 정답의 위치는 랜덤하게 설정하였는가?
         Collections.shuffle(option4);
-
         displayArea.setText("----- 객관식 퀴즈 " + (currentQuestion+1) + "번 -----\n");
         displayArea.append("\"" + w.eng + "\"의 뜻은 무엇일까요?\n");
 
@@ -359,8 +383,7 @@ public class MainFrame extends JFrame {
                 inputButton.setEnabled(false);
                 if (answer < 1 || answer > 4) {
                     displayArea.append("1에서 4 사이의 숫자를 입력하세요.\n");
-                    inputField.setEnabled(true);
-                    inputButton.setEnabled(true);
+                    enableInputFieldAndButton();
                     inputField.requestFocusInWindow();
                     return;
                 }
@@ -374,9 +397,8 @@ public class MainFrame extends JFrame {
                     w.wrongCount++;
                     displayArea.append("틀렸습니다. 정답은 " + (option4.indexOf(w) + 1) + "번입니다.\n");
                 }
-                Timer timer = new Timer(2000, event -> {
-                    inputField.setEnabled(true);
-                    inputButton.setEnabled(true);
+                Timer timer = new Timer(1000, event -> {
+                    enableInputFieldAndButton();
                     inputField.requestFocusInWindow();
                     currentQuestion++;
                     showNextQuestion2();
@@ -385,8 +407,7 @@ public class MainFrame extends JFrame {
                 timer.start();
             } catch (NumberFormatException ex) {
                 displayArea.append("숫자를 입력하세요.\n");
-                inputField.setEnabled(true);
-                inputButton.setEnabled(true);
+                enableInputFieldAndButton();
                 inputField.requestFocusInWindow();
             }
         });
@@ -402,19 +423,17 @@ public class MainFrame extends JFrame {
     private void showNextQuestion1() {
         // 5-D. 10문제가 연속으로 출제되는가?
         if (currentQuestion >= voc10.size()) {
-            // 5-G. 퀴즈 출제된 단어의 출제회수가 누적되는가?
-            // 5-I. 뜻이 같은 단어에 대한 출제회수 처리는 잘 하였는가?
-            for (Word word : voc10) {
-                for (Word v : vocManager.voc) {
-                    if (v.kor.equals(word.kor)) {
-                        v.showCount++;
-                    }
-                }
-            }
             endQuiz();
             return;
         }
         Word w = voc10.get(currentQuestion);
+        // 5-G. 퀴즈 출제된 단어의 출제회수가 누적되는가?
+        // 5-I. 뜻이 같은 단어에 대한 출제회수 처리는 잘 하였는가?
+        for (Word v : vocManager.voc) {
+            if (v.kor.equals(w.kor)) {
+                v.showCount++;
+            }
+        }
         displayArea.setText("----- 주관식 퀴즈 " + (currentQuestion + 1) + "번 -----\n");
         displayArea.append("\"" + w.kor + "\"의 뜻을 가진 영어 단어는 무엇일까요?\n");
         inputField.setText("");
@@ -447,9 +466,8 @@ public class MainFrame extends JFrame {
                 }
                 displayArea.append("틀렸습니다. 정답은 \"" + w.eng + "\"입니다.\n");
             }
-            Timer timer = new Timer(2000, event -> {
-                inputField.setEnabled(true);
-                inputButton.setEnabled(true);
+            Timer timer = new Timer(1000, event -> {
+                enableInputFieldAndButton();
                 inputField.requestFocusInWindow();
                 currentQuestion++;
                 showNextQuestion1();
@@ -472,15 +490,15 @@ public class MainFrame extends JFrame {
         // 5-E. 10문제의 퀴즈를 푼 시간을 측정하여 출력하였는가?
         // 6-F. 10문제의 퀴즈를 푼 시간을 측정하여 출력하였는가?
         long timeTaken = (endTime - startTime) / 1_000_000_000;
-        timeTaken -= 20;
+        timeTaken -= 10;
         displayArea.setText("퀴즈 종료!\n");
         // 5-F. 10문제 퀴즈 채점한 결과가 출력되었는가?
         // 6-G. 10문제 퀴즈 채점한 결과가 출력되었는가?
         displayArea.append("점수: " + score + " / " + voc10.size() + "\n");
         displayArea.append("소요 시간: " + timeTaken + "초");
         inputField.setText("");
-        inputButton.setEnabled(true);
-        inputField.requestFocus();
+        inputField.setEnabled(false);
+        inputButton.setEnabled(false);
     }
     /**
      * menu3,4
@@ -518,15 +536,18 @@ public class MainFrame extends JFrame {
     private void initWrongTableData() {
         if (vocManager != null) {
             if (!vocManager.voc.isEmpty()) {
-                List<Word> list = vocManager.voc.stream()
+                List<Word> list = vocManager.voc;
+                list = vocManager.voc.stream()
                         .filter(word -> word.wrongCount >= 1)
                         // 7-B. 오답회수가 가장 높은 단어순으로 출력되는가?
                         .sorted((w1, w2) -> Integer.compare(w2.wrongCount, w1.wrongCount))
                         .toList();
-
+                centerPanel.removeAll();
                 if (list.isEmpty()) {
                     // 7-C.틀린 단어가 없는 경우에 대한 처리도 하였는가?
-                    displayArea.setText("틀린 문제가 없습니다.\n");
+                    JLabel emptyLabel = new JLabel("틀린 문제가 없습니다.");
+                    emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                    centerPanel.add(emptyLabel, BorderLayout.CENTER);
                 } else {
                     DefaultTableModel model = new DefaultTableModel(header2, 0);
                     for (Word word : list) {
@@ -551,4 +572,13 @@ public class MainFrame extends JFrame {
             inputPanel.setVisible(showInputPanel);
         }
     }
+    /**
+     * menu1,2
+     * input field, button 활성화
+     */
+    private void enableInputFieldAndButton() {
+        inputField.setEnabled(true);
+        inputButton.setEnabled(true);
+    }
+
 }

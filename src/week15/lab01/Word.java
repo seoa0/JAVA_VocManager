@@ -1,4 +1,4 @@
-package week15;
+package week15.lab01;
 
 public class Word {
     String eng;
