@@ -11,6 +11,11 @@ import java.util.stream.Collectors;
  * menu4는 gui에 맞게 변경하였다.
  * menu1,2,3은 콘솔에서 출력되는 형태이므로 gui에서 실행되는 함수는 아니다.
  *
+ * 요구사항
+ * 1. 사용자 입력 실수, 파일 오류 등을 고려한 예외처리를 수행하였는가? yes
+ * 2. 텍스트 파일을 읽어서 Word 객체를 생성한 후, 컬렉션 클래스의 저장구조에 잘 저장하였는가? yes
+ * 3. 파일에 저장된 패턴(영어와 단어가 나열된 형식)이 동일한 파일도 읽어서 처리할 수 있는가? yes
+ *
  * @author 서아영
  * @since 2024-12-11
  */
@@ -30,16 +35,17 @@ public class VocManager {
 
     public String run(String filename) {
         try {
+            // 3. 파일에 저장된 패턴(영어와 단어가 나열된 형식)이 동일한 파일도 읽어서 처리할 수 있는가?
             Scanner scan = new Scanner(new File(filename));
             while (scan.hasNextLine()) {
                 String line = scan.nextLine();
                 StringTokenizer st = new StringTokenizer(line, "\t");
                 String eng = st.nextToken();
                 String kor = st.nextToken();
+                // 2. 텍스트 파일을 읽어서 Word 객체를 생성한 후, 컬렉션 클래스의 저장구조에 잘저장하였는가?
                 this.addWord(new Word(eng.trim(), kor.trim()));
             }
             return name + "의 단어장이 생성되었습니다.";
-//            menu();
         } catch (FileNotFoundException e) {
             return "파일을 찾을 수 없습니다.";
         }

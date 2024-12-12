@@ -12,7 +12,9 @@ import java.util.stream.Collectors;
 /**
  * vocManager의 GUI를 제공하는 JFrame
  *
- * 요구사항
+ *
+ * 요구사항 2,3번(vocManager)을 제외한 모든 요구사항은 이 클래스에서 구현되었다.
+ * <<< 체크리스트 >>>
  * 1. 사용자 입력 실수, 파일 오류 등을 고려한 예외처리를 수행하였는가? yes
  * 2. 텍스트 파일을 읽어서 Word 객체를 생성한 후, 컬렉션 클래스의 저장구조에 잘 저장하였는가? yes
  * 3. 파일에 저장된 패턴(영어와 단어가 나열된 형식)이 동일한 파일도 읽어서 처리할 수 있는가? yes
@@ -74,7 +76,7 @@ public class MainFrame extends JFrame {
     private long endTime;
 
     String[] header = {"영단어", "뜻"};
-    String[] header2 = {"영단어", "뜻", "틀린 횟수"};
+    String[] header2 = {"영단어", "뜻", "틀린 횟수", "출력 횟수"};
 
     boolean flag = true; // 오름차순
 
@@ -141,6 +143,7 @@ public class MainFrame extends JFrame {
         menu4Button.addActionListener(e -> handleMenu4());
 
         JButton exitButton = new JButton("종료");
+        // 4. 메뉴는 5번 종료 메뉴를 수행할 때까지 반복 수행되는가?
         exitButton.addActionListener(e -> System.exit(0));
 
         menuPanel.add(menu1Button);
@@ -165,15 +168,16 @@ public class MainFrame extends JFrame {
                 Word w = vocManager.menu4(text.getText());
                 if (w != null) {
                     removeTableData();
+                    // 8-A. 입력된 단어를 찾은 경우 단어의 뜻을 보여주는가?
                     model.addRow(new String[]{w.eng, w.kor});
                 } else {
+                    // 8-B. 단어장에 등록되지 않은 단어의 경우 처리를 하였는가?
                     JOptionPane.showMessageDialog(MainFrame.this, "단어를 찾을 수 없습니다.");
                 }
             }
             text.setText("");
         });
         this.northPanel.add(text);
-
         JButton btn = new JButton("검색");
         btn.addActionListener(e -> {
             if (vocManager != null) {
@@ -274,6 +278,7 @@ public class MainFrame extends JFrame {
         resetCenterPanel();
         initDisplayArea();
         Collections.shuffle(vocManager.voc);
+        // 5-A. 퀴즈 10문제가 중복되지 않도록 처리하였는가?
         voc10 = vocManager.voc.subList(0, Math.min(10, vocManager.voc.size()));
         currentQuestion = 0;
         score = 0;
@@ -319,50 +324,60 @@ public class MainFrame extends JFrame {
      * 객관식 퀴즈 생성하는 함수
      */
     private void showNextQuestion2() {
+        // 6-E. 10문제가 연속으로 출제되는가?
         if (currentQuestion >= voc10.size()) {
+            // 6-H. 퀴즈 출제된 단어의 출제회수가 누적되는가?
+            voc10.forEach(word -> word.showCount++);
             endQuiz();
             return;
         }
         Word w = voc10.get(currentQuestion);
+        // 6-A. 퀴즈의 선지로 선택된 4개의 영어 단어에는 중복이 없는가?
         option4 = vocManager.voc.stream()
+        // 6-B. 선지를 구성하는 4개의 영어 단어의 뜻도 중복체크 하였는가?
                 .filter(word -> !word.kor.equals(w.kor))
                 .limit(3)
                 .collect(Collectors.toList());
         option4.add(w);
+        // 6-C. 정답의 위치는 랜덤하게 설정하였는가?
         Collections.shuffle(option4);
 
-        displayArea.setText("----- 객관식 퀴즈 " + (++currentQuestion) + "번 -----\n");
+        displayArea.setText("----- 객관식 퀴즈 " + (currentQuestion+1) + "번 -----\n");
         displayArea.append("\"" + w.eng + "\"의 뜻은 무엇일까요?\n");
 
         for (int i = 0; i < option4.size(); i++) {
             displayArea.append((i + 1) + ") " + option4.get(i).kor + "\n");
         }
         inputField.setText("");
-        // 전에 있던 리스너 제거
         for (ActionListener al : inputButton.getActionListeners()) {
             inputButton.removeActionListener(al);
         }
         inputButton.addActionListener(e -> {
             try {
                 int answer = Integer.parseInt(inputField.getText().trim());
-                inputField.setEnabled(false); // 입력 필드 비활성화
-                inputButton.setEnabled(false); // 버튼 비활성화
+                inputField.setEnabled(false);
+                inputButton.setEnabled(false);
                 if (answer < 1 || answer > 4) {
                     displayArea.append("1에서 4 사이의 숫자를 입력하세요.\n");
+                    inputField.setEnabled(true);
+                    inputButton.setEnabled(true);
+                    inputField.requestFocusInWindow();
                     return;
                 }
+                // 6-D. 사용자가 답을 입력하면 정확하게 정답과 오답을 출력하는가?
                 if (option4.get(answer - 1).kor.equals(w.kor)) {
                     score++;
                     displayArea.append("정답입니다!\n");
                 } else {
+                    // 6-I. 퀴즈에서 틀린 단어에 대한 오답처리가 제대로 되는가?
+                    // 6-J. 오답 회수는 누적되는가?
                     w.wrongCount++;
                     displayArea.append("틀렸습니다. 정답은 " + (option4.indexOf(w) + 1) + "번입니다.\n");
                 }
-                // 일정 시간 후 다음 문제로 이동
                 Timer timer = new Timer(2000, event -> {
-                    inputField.setEnabled(true); // 입력 필드 다시 활성화
-                    inputButton.setEnabled(true); // 버튼 다시 활성화
-                    inputField.requestFocusInWindow(); // 포커스 설정
+                    inputField.setEnabled(true);
+                    inputButton.setEnabled(true);
+                    inputField.requestFocusInWindow();
                     currentQuestion++;
                     showNextQuestion2();
                 });
@@ -370,60 +385,79 @@ public class MainFrame extends JFrame {
                 timer.start();
             } catch (NumberFormatException ex) {
                 displayArea.append("숫자를 입력하세요.\n");
-                inputField.setEnabled(true); // 입력 필드 다시 활성화
-                inputButton.setEnabled(true); // 버튼 다시 활성화
-                inputField.requestFocusInWindow(); // 포커스 설정
+                inputField.setEnabled(true);
+                inputButton.setEnabled(true);
+                inputField.requestFocusInWindow();
             }
         });
-        // inputField의 Enter 입력 처리
         for (ActionListener al : inputField.getActionListeners()) {
             inputField.removeActionListener(al);
         }
         inputField.addActionListener(e -> inputButton.doClick());
     }
-
     /**
      * menu1
      * 주관식 퀴즈 생성하는 함수
      */
     private void showNextQuestion1() {
+        // 5-D. 10문제가 연속으로 출제되는가?
         if (currentQuestion >= voc10.size()) {
+            // 5-G. 퀴즈 출제된 단어의 출제회수가 누적되는가?
+            // 5-I. 뜻이 같은 단어에 대한 출제회수 처리는 잘 하였는가?
+            for (Word word : voc10) {
+                for (Word v : vocManager.voc) {
+                    if (v.kor.equals(word.kor)) {
+                        v.showCount++;
+                    }
+                }
+            }
             endQuiz();
             return;
         }
         Word w = voc10.get(currentQuestion);
-        displayArea.setText("----- 주관식 퀴즈 " + (currentQuestion+1) + "번 -----\n");
+        displayArea.setText("----- 주관식 퀴즈 " + (currentQuestion + 1) + "번 -----\n");
         displayArea.append("\"" + w.kor + "\"의 뜻을 가진 영어 단어는 무엇일까요?\n");
         inputField.setText("");
-        // 전에 있던 리스너 제거
         for (ActionListener al : inputButton.getActionListeners()) {
             inputButton.removeActionListener(al);
         }
-
-        // inputButton 이벤트 처리
         inputButton.addActionListener(e -> {
             String answer = inputField.getText().trim();
-            inputField.setEnabled(false); // 입력 필드 비활성화
-            inputButton.setEnabled(false); // 버튼 비활성화
-            if (answer.equalsIgnoreCase(w.eng)) {
+            inputField.setEnabled(false);
+            inputButton.setEnabled(false);
+            // 5-B. 정답을 정확하게 체크하는가?
+            // 5-C. 뜻이 같은 단어에 대한 정답처리를 잘 하였는가?
+            boolean isCorrect = false;
+            for (Word word : vocManager.voc) {
+                if (word.kor.equals(w.kor) && word.eng.equalsIgnoreCase(answer)) {
+                    isCorrect = true;
+                    break;
+                }
+            }
+            if (isCorrect) {
                 score++;
                 displayArea.append("정답입니다!\n");
             } else {
-                w.wrongCount++;
+                // 5-H. 오답시 오답회수가 누적되는가?
+                // 5-J. 뜻이 같은 단어에 대한 오답회수 처리를 잘 하였는가?
+                for (Word word : vocManager.voc) {
+                    if (word.kor.equals(w.kor)) {
+                        word.wrongCount++;
+                    }
+                }
                 displayArea.append("틀렸습니다. 정답은 \"" + w.eng + "\"입니다.\n");
             }
-
-            // 일정 시간 후 다음 문제로 이동
             Timer timer = new Timer(2000, event -> {
-                inputField.setEnabled(true); // 입력 필드 다시 활성화
-                inputButton.setEnabled(true); // 버튼 다시 활성화
-                inputField.requestFocusInWindow(); // 포커스 설정
+                inputField.setEnabled(true);
+                inputButton.setEnabled(true);
+                inputField.requestFocusInWindow();
                 currentQuestion++;
                 showNextQuestion1();
             });
             timer.setRepeats(false);
             timer.start();
         });
+
         for (ActionListener al : inputField.getActionListeners()) {
             inputField.removeActionListener(al);
         }
@@ -435,16 +469,18 @@ public class MainFrame extends JFrame {
      */
     private void endQuiz() {
         endTime = System.nanoTime();
-        long timeTaken = (endTime - startTime) / 1_000_000_000; // 총 소요 시간(초 단위)
-        timeTaken -= 20; // 20초 빼기 (문제 당 2초 * 10문제)
-        timeTaken = Math.max(0, timeTaken); // 음수 방지
-
+        // 5-E. 10문제의 퀴즈를 푼 시간을 측정하여 출력하였는가?
+        // 6-F. 10문제의 퀴즈를 푼 시간을 측정하여 출력하였는가?
+        long timeTaken = (endTime - startTime) / 1_000_000_000;
+        timeTaken -= 20;
         displayArea.setText("퀴즈 종료!\n");
+        // 5-F. 10문제 퀴즈 채점한 결과가 출력되었는가?
+        // 6-G. 10문제 퀴즈 채점한 결과가 출력되었는가?
         displayArea.append("점수: " + score + " / " + voc10.size() + "\n");
         displayArea.append("소요 시간: " + timeTaken + "초");
         inputField.setText("");
-        inputButton.setEnabled(true); // 버튼 다시 활성화
-        inputField.requestFocus();   // 포커스 이동
+        inputButton.setEnabled(true);
+        inputField.requestFocus();
     }
     /**
      * menu3,4
@@ -478,20 +514,28 @@ public class MainFrame extends JFrame {
      * menu3
      * 오답 노트 데이터 불러오는 함수
      */
+    // 7-A. 퀴즈에서 틀린 문제는 오답노트에 잘 저장하였는가?
     private void initWrongTableData() {
         if (vocManager != null) {
             if (!vocManager.voc.isEmpty()) {
                 List<Word> list = vocManager.voc.stream()
                         .filter(word -> word.wrongCount >= 1)
+                        // 7-B. 오답회수가 가장 높은 단어순으로 출력되는가?
                         .sorted((w1, w2) -> Integer.compare(w2.wrongCount, w1.wrongCount))
                         .toList();
-                DefaultTableModel model = new DefaultTableModel(header2, 0);
-                for (Word word : list) {
-                    model.addRow(new Object[]{word.eng, word.kor, word.wrongCount});
+
+                if (list.isEmpty()) {
+                    // 7-C.틀린 단어가 없는 경우에 대한 처리도 하였는가?
+                    displayArea.setText("틀린 문제가 없습니다.\n");
+                } else {
+                    DefaultTableModel model = new DefaultTableModel(header2, 0);
+                    for (Word word : list) {
+                        model.addRow(new Object[]{word.eng, word.kor, word.wrongCount, word.showCount});
+                    }
+                    table = new JTable(model);
+                    JScrollPane scrollPane = new JScrollPane(table);
+                    centerPanel.add(scrollPane, BorderLayout.CENTER);
                 }
-                table = new JTable(model);
-                JScrollPane scrollPane = new JScrollPane(table);
-                centerPanel.add(scrollPane, BorderLayout.CENTER);
             }
         }
     }
