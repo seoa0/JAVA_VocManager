@@ -78,7 +78,7 @@ public class MainFrame extends JFrame {
     String[] header = {"영단어", "뜻"};
     String[] header2 = {"영단어", "뜻", "틀린 횟수", "출력 횟수"};
 
-    boolean flag = true; // 오름차순
+    boolean flag = true;
 
     /**
      * MainFrame 생성자
@@ -100,7 +100,7 @@ public class MainFrame extends JFrame {
         this.vocManager = new VocManager("202311303 서아영");
         String str = this.vocManager.run(filename);
         JOptionPane.showMessageDialog(this, str);
-        initTable(); // 테이블 초기화
+        initTable();
         initTableData();
     }
     /**
@@ -237,10 +237,10 @@ public class MainFrame extends JFrame {
      */
     private void handleMenu4() {
         togglePanels(true, false);
-        resetCenterPanel(); // 센터 패널 초기화
-        initTable();        // 테이블 초기화
-        initTableData();    // 테이블 데이터 추가
-        frame.revalidate(); // 레이아웃 갱신
+        resetCenterPanel();
+        initTable();
+        initTableData();
+        frame.revalidate();
         frame.repaint();
     }
     /**
